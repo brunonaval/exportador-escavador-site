@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action https://nrievrmmrlxrfnftscos.supabase.co; base-uri 'none'; object-src 'none'">
+  <title>Confirm access — ExportChat Pro</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#19332a;background:#f4f8f6}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#f8fbfa 0%,#edf6f2 100%)}
+    .card{width:min(100%,560px);background:#fff;border:1px solid #d8e7e1;border-radius:20px;box-shadow:0 18px 50px rgba(21,72,53,.12);padding:32px}
+    .brand{display:flex;gap:16px;align-items:center;margin-bottom:24px}
+    .icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#087f5b;color:#fff;font-size:20px;font-weight:800}
+    .eyebrow{font-size:13px;font-weight:700;color:#577066;margin-bottom:3px}
+    h1{font-size:25px;line-height:1.2;margin:0;color:#18372c}
+    p{font-size:15px;line-height:1.6;color:#334b42;margin:0 0 16px}
+    .muted{color:#667d74;font-size:14px}
+    button{width:100%;border:0;border-radius:12px;background:#087f5b;color:#fff;font-size:15px;font-weight:750;padding:14px 18px;cursor:pointer;box-shadow:0 6px 16px rgba(8,127,91,.18)}
+    button:hover{background:#076c4e}
+    button:focus-visible{outline:3px solid rgba(8,127,91,.25);outline-offset:3px}
+    .footnote{font-size:12.5px;color:#71877e;margin-top:18px;margin-bottom:0}
+    .status{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:6px 0 20px;background:#dff7ea;color:#087443;font-size:34px;font-weight:800}
+    .status.error{background:#feeceb;color:#b42318}
+    [hidden]{display:none!important}
+    @media (max-width:560px){.card{padding:24px;border-radius:16px}.brand{align-items:flex-start}h1{font-size:22px}}
+  </style>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <div class="brand">
+      <div class="icon" aria-hidden="true">E</div>
+      <div>
+        <div class="eyebrow">ExportChat</div>
+        <h1 id="title">Confirm Pro access</h1>
+      </div>
+    </div>
+
+    <section id="confirm" hidden>
+      <p>Confirm this sign-in to activate <strong>ExportChat Pro</strong> in the browser where you requested access.</p>
+      <p class="muted">This link is valid for 10 minutes and can only be used once.</p>
+      <form method="post" action="https://nrievrmmrlxrfnftscos.supabase.co/functions/v1/approve-login">
+        <input id="token" type="hidden" name="token">
+        <button type="submit">Confirm access on this computer</button>
+      </form>
+      <p class="footnote">If you did not request this sign-in, close this page. Nothing changes until you click confirm.</p>
+    </section>
+
+    <section id="result" hidden>
+      <div id="badge" class="status" aria-hidden="true">✓</div>
+      <p id="message"></p>
+      <p id="hint" class="muted"></p>
+    </section>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const params = new URLSearchParams(location.search);
+    const rawToken = params.get('token') || '';
+    const state = (params.get('state') || '').toLowerCase();
+    const title = document.getElementById('title');
+    const confirm = document.getElementById('confirm');
+    const result = document.getElementById('result');
+    const token = document.getElementById('token');
+    const badge = document.getElementById('badge');
+    const message = document.getElementById('message');
+    const hint = document.getElementById('hint');
+
+    if (rawToken || state) history.replaceState({}, document.title, location.pathname);
+
+    function showResult(heading, body, secondary, ok) {
+      title.textContent = heading;
+      message.textContent = body;
+      hint.textContent = secondary || '';
+      badge.textContent = ok ? '✓' : '!';
+      badge.classList.toggle('error', !ok);
+      result.hidden = false;
+    }
+
+    if (state) {
+      const states = {
+        approved: ['Access confirmed','Your ExportChat Pro access was confirmed successfully.','Return to WhatsApp Web. ExportChat should finish activation automatically.',true],
+        consumed: ['Access already confirmed','This sign-in link has already been used.','Return to ExportChat to continue.',true],
+        expired: ['Link expired','This sign-in link has expired.','Return to ExportChat and request a new link.',false],
+        inactive: ['Access unavailable','No active ExportChat Pro entitlement was found.','Make sure you are using the same email associated with your Pro access.',false],
+        invalid: ['Invalid link','This sign-in link is not valid.','Return to ExportChat and request a new link.',false],
+        error: ['Could not confirm access','The service could not complete this authorization.','Request a new sign-in link from ExportChat.',false],
+        method: ['Invalid request','This request could not be processed.','Return to ExportChat and request a new link.',false]
+      };
+      const s = states[state] || states.error;
+      showResult(s[0],s[1],s[2],s[3]);
+      return;
+    }
+
+    if (rawToken.length >= 20 && rawToken.length <= 512) {
+      token.value = rawToken;
+      confirm.hidden = false;
+      return;
+    }
+
+    showResult('Invalid link','The confirmation token is missing or incomplete.','Return to ExportChat and request a new sign-in link.',false);
+  })();
+  </script>
+</body>
+</html>
