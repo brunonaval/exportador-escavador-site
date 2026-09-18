@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action https://nrievrmmrlxrfnftscos.supabase.co; base-uri 'none'; object-src 'none'">
+  <title>Confirmar acesso — Exportador PDF para Escavador PRO</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f5f7fb}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#f8fafc 0%,#eef3fb 100%)}
+    .card{width:min(100%,560px);background:#fff;border:1px solid #dbe3f0;border-radius:20px;box-shadow:0 18px 50px rgba(31,49,83,.12);padding:32px}
+    .brand{display:flex;gap:16px;align-items:center;margin-bottom:24px}
+    .icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#173d86;color:#fff;font-size:13px;font-weight:800;letter-spacing:.04em}
+    .eyebrow{font-size:13px;font-weight:700;color:#55647a;margin-bottom:3px}
+    h1{font-size:25px;line-height:1.2;margin:0;color:#12213c}
+    p{font-size:15px;line-height:1.6;color:#334155;margin:0 0 16px}
+    .muted{color:#64748b;font-size:14px}
+    button{width:100%;border:0;border-radius:12px;background:#173d86;color:#fff;font-size:15px;font-weight:750;padding:14px 18px;cursor:pointer;box-shadow:0 6px 16px rgba(23,61,134,.18)}
+    button:hover{background:#12346f}
+    button:focus-visible{outline:3px solid rgba(23,61,134,.25);outline-offset:3px}
+    .footnote{font-size:12.5px;color:#718096;margin-top:18px;margin-bottom:0}
+    .status{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:6px 0 20px;background:#dff7ea;color:#087443;font-size:34px;font-weight:800}
+    .status.error{background:#feeceb;color:#b42318}
+    [hidden]{display:none!important}
+    @media (max-width:560px){.card{padding:24px;border-radius:16px}.brand{align-items:flex-start}h1{font-size:22px}}
+  </style>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <div class="brand">
+      <div class="icon" aria-hidden="true">PDF</div>
+      <div>
+        <div class="eyebrow">Exportador PDF para Escavador</div>
+        <h1 id="title">Confirmar acesso PRO</h1>
+      </div>
+    </div>
+
+    <section id="confirm" hidden>
+      <p>Confirme este acesso para ativar o <strong>Exportador PDF para Escavador PRO</strong> no navegador em que você solicitou a entrada.</p>
+      <p class="muted">O link é válido por 10 minutos e só pode ser usado uma vez.</p>
+      <form method="post" action="https://nrievrmmrlxrfnftscos.supabase.co/functions/v1/approve-login">
+        <input id="token" type="hidden" name="token">
+        <button type="submit">Confirmar acesso neste computador</button>
+      </form>
+      <p class="footnote">Se você não solicitou este acesso, feche esta página. Nenhuma alteração é feita até você clicar em confirmar.</p>
+    </section>
+
+    <section id="result" hidden>
+      <div id="badge" class="status" aria-hidden="true">✓</div>
+      <p id="message"></p>
+      <p id="hint" class="muted"></p>
+    </section>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const params = new URLSearchParams(location.search);
+    const rawToken = params.get('token') || '';
+    const state = (params.get('state') || '').toLowerCase();
+    const title = document.getElementById('title');
+    const confirm = document.getElementById('confirm');
+    const result = document.getElementById('result');
+    const token = document.getElementById('token');
+    const badge = document.getElementById('badge');
+    const message = document.getElementById('message');
+    const hint = document.getElementById('hint');
+
+    if (rawToken || state) history.replaceState({}, document.title, location.pathname);
+
+    function showResult(heading, body, secondary, ok) {
+      title.textContent = heading;
+      message.textContent = body;
+      hint.textContent = secondary || '';
+      badge.textContent = ok ? '✓' : '!';
+      badge.classList.toggle('error', !ok);
+      result.hidden = false;
+    }
+
+    if (state) {
+      const states = {
+        approved: ['Acesso confirmado','Seu acesso PRO foi confirmado com sucesso.','Volte para a aba do Escavador. A extensão deve concluir a ativação automaticamente.',true],
+        consumed: ['Acesso já confirmado','Este link já foi utilizado.','Volte para a extensão para concluir a ativação.',true],
+        expired: ['Link expirado','Este link de acesso expirou.','Volte para a extensão e solicite um novo link.',false],
+        inactive: ['Acesso indisponível','Não foi encontrada uma licença PRO ativa para este produto.','Confira se você está usando o mesmo e-mail utilizado na compra.',false],
+        invalid: ['Link inválido','Este link de acesso não é válido.','Volte para a extensão e solicite um novo link.',false],
+        error: ['Não foi possível confirmar','O serviço não conseguiu concluir a autorização.','Tente solicitar um novo link na extensão.',false],
+        method: ['Solicitação inválida','Não foi possível processar esta solicitação.','Volte para a extensão e solicite um novo link.',false]
+      };
+      const s = states[state] || states.error;
+      showResult(s[0],s[1],s[2],s[3]);
+      return;
+    }
+
+    if (rawToken.length >= 20 && rawToken.length <= 512) {
+      token.value = rawToken;
+      confirm.hidden = false;
+      return;
+    }
+
+    showResult('Link inválido','O link de confirmação está ausente ou incompleto.','Volte para a extensão e solicite um novo link de acesso.',false);
+  })();
+  </script>
+</body>
+</html>
