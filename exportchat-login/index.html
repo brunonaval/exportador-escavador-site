@@ -58,7 +58,8 @@
   (() => {
     'use strict';
     const params = new URLSearchParams(location.search);
-    const rawToken = params.get('token') || '';
+    const fragment = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const rawToken = fragment.get('token') || params.get('token') || '';
     const state = (params.get('state') || '').toLowerCase();
     const title = document.getElementById('title');
     const confirm = document.getElementById('confirm');
@@ -68,7 +69,7 @@
     const message = document.getElementById('message');
     const hint = document.getElementById('hint');
 
-    if (rawToken || state) history.replaceState({}, document.title, location.pathname);
+    if (rawToken || state || location.hash) history.replaceState({}, document.title, location.pathname);
 
     function showResult(heading, body, secondary, ok) {
       title.textContent = heading;
